@@ -1,0 +1,24 @@
+name: time-tracker
+version: 0.1
+executables:
+  time-tracker:
+    main: Main.hs
+    source-dirs:
+      - src
+    other-modules:
+      - TimeTracker
+      - TimeTracker.Actions
+      - TimeTracker.Bindings
+      - TimeTracker.Config
+
+dependencies:
+  - base
+  - directory
+  - containers
+  - filepath
+  - yaml
+  - time
+  - mtl
+  - hslogger
+  - exceptions
+

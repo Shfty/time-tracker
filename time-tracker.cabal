@@ -1,0 +1,30 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.36.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           time-tracker
+version:        0.1
+build-type:     Simple
+
+executable time-tracker
+  main-is: Main.hs
+  other-modules:
+      TimeTracker
+      TimeTracker.Actions
+      TimeTracker.Bindings
+      TimeTracker.Config
+  hs-source-dirs:
+      src
+  build-depends:
+      base
+    , containers
+    , directory
+    , exceptions
+    , filepath
+    , hslogger
+    , mtl
+    , time
+    , yaml
+  default-language: Haskell2010
