@@ -12,9 +12,11 @@ import TimeTracker
 import TimeTracker.Actions
 import TimeTracker.Bindings
 import TimeTracker.Config
-
+import TimeTracker.Input
 import Control.Concurrent
-import Control.Concurrent.Timer
+
+tickHz = 15
+tickRate = 1.0 / tickHz
 
 -- Configure stdin for transparent per-char input
 configureStdin :: IO ()
@@ -22,35 +24,18 @@ configureStdin = do
     hSetEcho stdin False
     hSetBuffering stdin NoBuffering
 
-inputThread :: Chan Char -> IO a
-inputThread chan = do
-    getChar >>= writeChan chan
-    inputThread chan
-
-outputThreadWith :: (Char -> TimeTrackerIO a) -> Chan Char -> TimeTrackerIO a
-outputThreadWith f chan = do
-    lift (readChan chan) >>= f
-    outputThreadWith f chan
-
-outputThread :: Chan Char -> TimeTracker
-outputThread = outputThreadWith $ lift . putStrLn . ("Input: " ++) . show
-
-secondsToMicros :: Int -> Int
-secondsToMicros = (* 1000000)
-
-tickThread chan = do
-    writeChan chan '\n'
-    threadDelay $ secondsToMicros 1
-    tickThread chan
-
-inputLoop' :: Chan Char -> TimeTracker
-inputLoop' chan = do
+-- Main loop
+mainLoop :: Channel -> TimeTracker
+mainLoop chan = do
+    let cont = mainLoop chan
     i <- lift (readChan chan)
-    let bindings' = bindings (inputLoop' chan)
+    let bindings' = bindings cont
     let binding = Data.Map.lookup i bindings'
-    catch (fromMaybe (inputLoop' chan) binding) handleError
+    catch (fromMaybe cont binding) handleError
 
+-- Entry point
 main = do
+    -- Load config
     configYaml <- loadConfig
 
     -- Extract base directory path and create it if missing
@@ -72,16 +57,10 @@ main = do
     -- Configure stdin for transparent per-char input
     configureStdin
 
-    -- Fork input and tick threads
-    chan <- newChan
-    forkIO $ inputThread chan
-    forkIO $ tickThread chan
+    -- Fork threads and receive communication channel
+    chan <- forkThreads tickRate
 
     -- Enter main loop
     runTimeTracker projectFile $ do
         loadProject
-        putStrLn' ""
-        printProjectPath
-        putStrLn' ""
-        printSummary
-        inputLoop' chan
+        mainLoop chan

@@ -10,6 +10,8 @@ executables:
       - TimeTracker.Actions
       - TimeTracker.Bindings
       - TimeTracker.Config
+      - TimeTracker.Input
+      - TimeTracker.Time
 
 dependencies:
   - base

@@ -133,7 +133,7 @@ printSummary = do
     printPaused
     printTotal
     putStrLn' ""
-    putStrLn' "Space: Toggle Pause | Return: Refresh"
+    putStrLn' "Space: Toggle Pause | Q: Quit"
     logTimestamps
 
 -- End the program.
