@@ -26,5 +26,6 @@ executable time-tracker
     , hslogger
     , mtl
     , time
+    , timers
     , yaml
   default-language: Haskell2010

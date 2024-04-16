@@ -13,6 +13,43 @@ import TimeTracker.Actions
 import TimeTracker.Bindings
 import TimeTracker.Config
 
+import Control.Concurrent
+import Control.Concurrent.Timer
+
+-- Configure stdin for transparent per-char input
+configureStdin :: IO ()
+configureStdin = do
+    hSetEcho stdin False
+    hSetBuffering stdin NoBuffering
+
+inputThread :: Chan Char -> IO a
+inputThread chan = do
+    getChar >>= writeChan chan
+    inputThread chan
+
+outputThreadWith :: (Char -> TimeTrackerIO a) -> Chan Char -> TimeTrackerIO a
+outputThreadWith f chan = do
+    lift (readChan chan) >>= f
+    outputThreadWith f chan
+
+outputThread :: Chan Char -> TimeTracker
+outputThread = outputThreadWith $ lift . putStrLn . ("Input: " ++) . show
+
+secondsToMicros :: Int -> Int
+secondsToMicros = (* 1000000)
+
+tickThread chan = do
+    writeChan chan '\n'
+    threadDelay $ secondsToMicros 1
+    tickThread chan
+
+inputLoop' :: Chan Char -> TimeTracker
+inputLoop' chan = do
+    i <- lift (readChan chan)
+    let bindings' = bindings (inputLoop' chan)
+    let binding = Data.Map.lookup i bindings'
+    catch (fromMaybe (inputLoop' chan) binding) handleError
+
 main = do
     configYaml <- loadConfig
 
@@ -33,8 +70,12 @@ main = do
     let projectFile = baseDir </> project <.> "yaml"
 
     -- Configure stdin for transparent per-char input
-    hSetEcho stdin False
-    hSetBuffering stdin NoBuffering
+    configureStdin
+
+    -- Fork input and tick threads
+    chan <- newChan
+    forkIO $ inputThread chan
+    forkIO $ tickThread chan
 
     -- Enter main loop
     runTimeTracker projectFile $ do
@@ -43,4 +84,4 @@ main = do
         printProjectPath
         putStrLn' ""
         printSummary
-        inputLoop
+        inputLoop' chan

@@ -21,4 +21,5 @@ dependencies:
   - mtl
   - hslogger
   - exceptions
+  - timers
 

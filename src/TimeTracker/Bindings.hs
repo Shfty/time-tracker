@@ -10,10 +10,10 @@ import TimeTracker.Actions
 
 -- Mapping from input character to action.
 bindings :: TimeTracker -> Map Char TimeTracker
-bindings inputLoop =
+bindings cont =
     fromList
-        [ (' ', togglePause >> inputLoop)
-        , ('\n', printSummary >> inputLoop)
+        [ (' ', togglePause >> cont)
+        , ('\n', printSummary >> cont)
         , ('q', quit)
         ]
 
