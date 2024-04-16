@@ -2,6 +2,7 @@ import Control.Monad.Catch
 import Control.Monad.State
 import Data.Map
 import Data.Maybe
+import Data.Time
 import System.Directory
 import System.Environment
 import System.Exit
@@ -41,18 +42,22 @@ main = do
     -- Extract base directory path and create it if missing
     baseDir <- configMaybe "baseDir" configYaml
     infoM "TimeTracker.Main" $ "Base Directory: " ++ baseDir
-    createDirectoryIfMissing True baseDir
 
     -- Retrieve target project from CLI arguments
     args <- getArgs
-    project <- case args of
-        [project] -> return project
-        _otherwise -> do
+    (project, deadline) <- case args of
+        [project, deadline] -> return (project, deadline)
+        [project] -> do
+            errorM "TimeTracker.Main" "Error: No deadline specified"
+            exitFailure
+        [] -> do
             errorM "TimeTracker.Main" "Error: No project specified"
             exitFailure
+        _otherwise -> do
+            errorM "TimeTracker.Main" "Error: Unexpected number of arguments"
+            exitFailure
 
-    -- Derive project file path from base dir and project name
-    let projectFile = baseDir </> project <.> "yaml"
+    let deadline' = parseTimeOrError True defaultTimeLocale "%Hh" deadline :: NominalDiffTime
 
     -- Configure stdin for transparent per-char input
     configureStdin
@@ -61,6 +66,6 @@ main = do
     chan <- forkThreads tickRate
 
     -- Enter main loop
-    runTimeTracker projectFile $ do
+    runTimeTracker baseDir project deadline' $ do
         loadProject
         mainLoop chan

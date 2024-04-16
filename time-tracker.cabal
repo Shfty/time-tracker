@@ -20,7 +20,8 @@ executable time-tracker
   hs-source-dirs:
       src
   build-depends:
-      base
+      aeson
+    , base
     , containers
     , directory
     , exceptions

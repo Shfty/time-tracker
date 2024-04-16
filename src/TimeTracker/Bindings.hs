@@ -10,7 +10,6 @@ import TimeTracker.Actions
 import TimeTracker.Input
 
 -- Mapping from input character to action.
-tick cont = printSummary >> cont
 bindings :: TimeTracker -> Map Input TimeTracker
 bindings cont =
     fromList
@@ -18,4 +17,3 @@ bindings cont =
         , (Char ' ', togglePause >> cont)
         , (Char 'q', quit)
         ]
-
